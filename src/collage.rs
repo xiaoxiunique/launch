@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use image::RgbaImage;
 
 use crate::mockup;
+use crate::output_image;
 use crate::screenshot;
 
 /// Generate a collage from multiple screenshots arranged in an auto grid.
@@ -96,8 +97,7 @@ pub fn run(
     }
 
     // 7. Save
-    canvas
-        .save(output)
+    output_image::save_opaque_png(&canvas, output)
         .with_context(|| format!("Failed to save collage to {}", output.display()))?;
 
     eprintln!(

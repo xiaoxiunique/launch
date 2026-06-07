@@ -6,6 +6,8 @@ use anyhow::{Context, Result};
 use image::imageops::FilterType;
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbaImage};
 
+use crate::output_image;
+
 pub fn load_image(path: &Path) -> Result<DynamicImage> {
     let img = image::open(path).with_context(|| format!("Failed to open image: {}", path.display()))?;
     let (w, h) = img.dimensions();
@@ -49,14 +51,35 @@ pub fn resize_icon(img: &DynamicImage, size: u32, fill_white_bg: bool) -> Result
     let resized = source.resize_exact(size, size, FilterType::Lanczos3);
 
     let mut buf = Cursor::new(Vec::new());
-    resized
-        .write_to(&mut buf, ImageFormat::Png)
-        .with_context(|| format!("Failed to encode {}x{} PNG", size, size))?;
+    if fill_white_bg {
+        DynamicImage::ImageRgb8(output_image::flatten_rgba_on_white(&resized.to_rgba8()))
+            .write_to(&mut buf, ImageFormat::Png)
+    } else {
+        resized.write_to(&mut buf, ImageFormat::Png)
+    }
+    .with_context(|| format!("Failed to encode {}x{} PNG", size, size))?;
     Ok(buf.into_inner())
 }
 
 fn blend(fg: u8, bg: u8, alpha: f32) -> u8 {
     ((fg as f32 * alpha) + (bg as f32 * (1.0 - alpha))).round() as u8
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fill_white_icons_encode_as_rgb_png() {
+        let img =
+            DynamicImage::ImageRgba8(RgbaImage::from_pixel(2, 2, image::Rgba([255, 0, 0, 128])));
+
+        let bytes = resize_icon(&img, 2, true).unwrap();
+        let decoder = png::Decoder::new(Cursor::new(bytes));
+        let reader = decoder.read_info().unwrap();
+
+        assert_eq!(reader.info().color_type, png::ColorType::Rgb);
+    }
 }
 
 /// Batch-resize all unique (size, fill_white_bg) combinations.

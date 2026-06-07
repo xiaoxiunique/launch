@@ -5,6 +5,7 @@ mod contents_json;
 mod device;
 mod generate_logo;
 mod mockup;
+mod output_image;
 mod record;
 mod resize;
 mod screenshot;

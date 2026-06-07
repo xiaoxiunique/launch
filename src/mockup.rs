@@ -6,6 +6,7 @@ use anyhow::{Context, Result};
 use image::{DynamicImage, GenericImageView, RgbaImage};
 
 use crate::device::{self, DeviceConfig, OrientationConfig};
+use crate::output_image;
 
 const MARKER_KEY: &str = "launch";
 const MARKER_VALUE: &str = "mockup";
@@ -171,15 +172,16 @@ pub fn is_already_processed(path: &Path) -> bool {
 
 /// Save an RGBA image as PNG with the launch marker.
 fn save_with_marker(img: &RgbaImage, output: &Path) -> Result<()> {
+    let rgb = output_image::flatten_rgba_on_white(img);
     let file = File::create(output)
         .with_context(|| format!("Failed to create {}", output.display()))?;
     let w = BufWriter::new(file);
     let mut encoder = png::Encoder::new(w, img.width(), img.height());
-    encoder.set_color(png::ColorType::Rgba);
+    encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Eight);
     encoder.add_text_chunk(MARKER_KEY.to_string(), MARKER_VALUE.to_string())?;
     let mut writer = encoder.write_header()?;
-    writer.write_image_data(img.as_raw())?;
+    writer.write_image_data(rgb.as_raw())?;
     writer.finish()?;
     Ok(())
 }

@@ -6,6 +6,7 @@ use image::{Rgba, RgbaImage};
 use imageproc::drawing::draw_text_mut;
 
 use crate::mockup;
+use crate::output_image;
 
 /// Default canvas size (iPhone 6.5" App Store screenshot)
 const CANVAS_W: u32 = 1242;
@@ -165,8 +166,7 @@ pub fn run(
     draw_text_mut(&mut canvas, TEXT_COLOR, text_x, text_y, scale, &font, title);
 
     // 6. Save
-    canvas
-        .save(output)
+    output_image::save_opaque_png(&canvas, output)
         .with_context(|| format!("Failed to save screenshot to {}", output.display()))?;
 
     eprintln!("Saved App Store screenshot to {}", output.display());
@@ -245,8 +245,7 @@ pub fn run_android(
     draw_text_mut(&mut canvas, TEXT_COLOR, text_x, text_y, scale, &font, title);
 
     // 6. Save
-    canvas
-        .save(output)
+    output_image::save_opaque_png(&canvas, output)
         .with_context(|| format!("Failed to save screenshot to {}", output.display()))?;
 
     eprintln!("Saved Play Store screenshot to {}", output.display());

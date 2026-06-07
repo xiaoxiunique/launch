@@ -10,6 +10,8 @@ use imageproc::drawing::{
 };
 use imageproc::point::Point;
 
+use crate::output_image;
+
 const OUTPUT_SIZE: u32 = 1024;
 const SCALE: u32 = 3;
 const CANVAS_SIZE: u32 = OUTPUT_SIZE * SCALE;
@@ -43,8 +45,7 @@ pub fn run(options: LogoOptions) -> Result<()> {
 
     let seed = options.seed.unwrap_or_else(random_seed);
     let image = render_logo(seed, options.text.as_deref())?;
-    image
-        .save(&options.output)
+    output_image::save_opaque_png(&image, &options.output)
         .with_context(|| format!("Failed to save logo: {}", options.output.display()))?;
     eprintln!("Logo seed: {}", seed);
     Ok(())
